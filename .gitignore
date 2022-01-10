@@ -1,0 +1,4 @@
+*.log
+configdev.json
+main
+obj

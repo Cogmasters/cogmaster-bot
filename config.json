@@ -1,0 +1,34 @@
+{
+  "logging": {
+    "level": "trace",
+    "filename": "bot.log",
+    "quiet": true,
+    "overwrite": false,
+    "use_color": true,
+    "http": {
+      "enable": true,
+      "filename": "http.log"
+    },
+    "disable_modules": ["WEBSOCKETS", "USER_AGENT"]
+  },
+  "discord": {
+    "token": "YOUR-BOT-TOKEN",
+    "default_prefix": {
+      "enable": true,
+      "prefix": ".c "
+    }
+  },
+  "cog_bot": {
+    "application_id": "YOUR-APPLICATION-ID",
+    "guild_id": "928763123362578552",
+    "category_id": "930190233767645314",
+    "roles": {
+      "rubberduck_id": "930190402819067904",
+      "helper_id": "930190524965617775",
+      "watcher_id": "930190900473262160",
+      "announcements_id": "930190728947171348",
+      "beginner_id": "930190778444181504"
+    },
+    "admin_roles": []
+  }
+}

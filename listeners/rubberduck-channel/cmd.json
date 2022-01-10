@@ -1,0 +1,97 @@
+{
+  "name": "mychannel",
+  "description": "Rubber duck channel commands",
+  "type": 1,
+  "default_permission": true,
+  "options": [
+    {
+      "name": "action",
+      "description": "Moderate your channel",
+      "type": 2,
+      "options": [
+        {
+          "name": "mute",
+          "description": "Mute a user from your channel (they may still read the channel)",
+          "type": 1,
+          "options": [
+            {
+              "name": "user",
+              "description": "User to be muted",
+              "type": 6,
+              "required": true
+            },
+            {
+              "name": "reason",
+              "description": "Reason for muting (only visible to staff)",
+              "type": 3,
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "unmute",
+          "description": "Unmute a user from your channel",
+          "type": 1,
+          "options": [
+            {
+              "name": "user",
+              "description": "User to be unmuted",
+              "type": 6,
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "configure",
+      "description": "Configure your channel",
+      "type": 1,
+      "options": [
+        {
+          "name": "visibility",
+          "description": "Change your channel visibility",
+          "type": 3,
+          "choices": [
+            {
+              "name": "public",
+              "value": "public"
+            },
+            {
+              "name": "private",
+              "value": "private"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "delete",
+      "description": "Delete your channel",
+      "type": 1,
+      "options": [
+        {
+          "name": "confirm",
+          "description": "Do you really want to delete your channel?",
+          "type": 3,
+          "required": true,
+          "choices": [
+            {
+              "name": "yes",
+              "value": "yes"
+            },
+            {
+              "name": "no",
+              "value": "no"
+            }
+          ]
+        },
+        {
+          "name": "reason",
+          "description": "Optional feedback for channel deletion (only visible to staff)",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}
