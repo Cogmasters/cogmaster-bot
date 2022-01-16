@@ -1,4 +1,4 @@
-# cog-bot
+# cogmaster-bot
 
 Bot for the [Cogmasters](https://discord.gg/Y7Xa6MA82v) server.
 
