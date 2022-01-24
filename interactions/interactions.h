@@ -27,8 +27,12 @@ struct cogbot_primitives {
         u64_snowflake_t watcher_id;
         /** role for users that want to subscribe to guild announcements */
         u64_snowflake_t announcements_id;
-        /** role for users that are C beginners */
-        u64_snowflake_t beginner_id;
+        /** role for users that are Linux users */
+        u64_snowflake_t linux_id;
+        /** role for users that are Windows users */
+        u64_snowflake_t windows_id;
+        /** role for users that are macOS users */
+        u64_snowflake_t macos_id;
     } roles;
 };
 
@@ -57,15 +61,15 @@ void react_select_subscriptions_menu(
     const struct discord_interaction *interaction);
 
 /**
- * @brief React to skill level selection menu
+ * @brief React to OS selection menu
  *
  * @param client the bot client
  * @param params the interaction response to be sent at `main.c`
  * @param interaction the interaction object received
  */
-void react_select_skill_level(struct discord *cogbot,
-                              struct discord_interaction_response *params,
-                              const struct discord_interaction *interaction);
+void react_select_OS(struct discord *cogbot,
+                     struct discord_interaction_response *params,
+                     const struct discord_interaction *interaction);
 
 /**
  * @brief React to rubberduck channel 'action' command

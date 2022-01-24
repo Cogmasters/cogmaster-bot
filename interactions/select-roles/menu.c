@@ -53,9 +53,9 @@ react_select_subscriptions_menu(struct discord *cogbot,
 }
 
 void
-react_select_skill_level(struct discord *cogbot,
-                         struct discord_interaction_response *params,
-                         const struct discord_interaction *interaction)
+react_select_OS(struct discord *cogbot,
+                struct discord_interaction_response *params,
+                const struct discord_interaction *interaction)
 {
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
     struct discord_guild_member *member = interaction->member;
@@ -68,8 +68,12 @@ react_select_skill_level(struct discord *cogbot,
         for (int i = 0, j = 0; interaction->data->values[i]; ++i) {
             char *value = interaction->data->values[i]->value;
 
-            if (0 == strcmp(value, "beginner"))
-                roles[j++] = primitives->roles.beginner_id;
+            if (0 == strcmp(value, "linux"))
+                roles[j++] = primitives->roles.linux_id;
+            if (0 == strcmp(value, "windows"))
+                roles[j++] = primitives->roles.windows_id;
+            if (0 == strcmp(value, "macos"))
+                roles[j++] = primitives->roles.macos_id;
             else if (0 == strcmp(value, "reset"))
                 is_reset = true;
         }
@@ -77,9 +81,15 @@ react_select_skill_level(struct discord *cogbot,
     if (is_reset) {
         discord_remove_guild_member_role(cogbot, interaction->guild_id,
                                          member->user->id,
-                                         primitives->roles.beginner_id, NULL);
+                                         primitives->roles.linux_id, NULL);
+        discord_remove_guild_member_role(cogbot, interaction->guild_id,
+                                         member->user->id,
+                                         primitives->roles.windows_id, NULL);
+        discord_remove_guild_member_role(cogbot, interaction->guild_id,
+                                         member->user->id,
+                                         primitives->roles.macos_id, NULL);
 
-        params->data->content = "Your skill level has been reset";
+        params->data->content = "Your OS has been reset";
     }
     else {
         const int arr_size = sizeof(roles) / sizeof(u64_snowflake_t);
@@ -89,6 +99,6 @@ react_select_skill_level(struct discord *cogbot,
                                           member->user->id, roles[i], NULL);
         }
 
-        params->data->content = "Your skill level has been set";
+        params->data->content = "Your OS has been set";
     }
 }

@@ -19,7 +19,7 @@
     }
   },
   "cog_bot": {
-    "application_id": "YOUR-APPLICATION-ID",
+    "application_id": "925720548477136917",
     "guild_id": "928763123362578552",
     "category_id": "930190233767645314",
     "roles": {
@@ -27,7 +27,9 @@
       "helper_id": "930190524965617775",
       "watcher_id": "930190900473262160",
       "announcements_id": "930190728947171348",
-      "beginner_id": "930190778444181504"
+      "linux_id": "928838335663857675",
+      "windows_id": "928838183133798470",
+      "macos_id": "930265747396132864"
     },
     "admin_roles": []
   }

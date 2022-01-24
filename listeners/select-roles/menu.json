@@ -44,26 +44,45 @@
       "components": [
         {
           "type":3,
-          "custom_id": "skill-level",
+          "custom_id": "os",
           "options":[
             {
-              "label": "Beginner",
-              "value": "beginner",
-              "description": "I'm a C beginner",
+              "label": "Linux",
+              "value": "linux",
+              "description": "I'm a Linux user",
               "emoji": {
-                "name": "📖"
+                "name": ":linux:",
+                "id":"928816214573215774"
+              }
+            },
+            {
+              "label": "Windows",
+              "value": "windows",
+              "description": "I'm a Windows user",
+              "emoji": {
+                "name": ":win10:",
+                "id":"928818764152209408"
+              }
+            },
+            {
+              "label": "macOS",
+              "value": "macos",
+              "description": "I'm a macOS user",
+              "emoji": {
+                "name": ":macintosh:",
+                "id":"928818683474772018"
               }
             },
             {
               "label": "Reset",
               "value": "reset",
-              "description": "Reset my skill level",
+              "description": "Reset my OS",
               "emoji": {
                 "name": "🔄"
               }
             }
           ],
-          "placeholder":"Pick your skill level"
+          "placeholder":"Pick your OS"
         }
       ]
     }

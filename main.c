@@ -62,8 +62,8 @@ on_interaction_create(struct discord *cogbot,
                  == strcmp(interaction->data->custom_id,
                            "channel-subscriptions"))
             react_select_subscriptions_menu(cogbot, &params, interaction);
-        else if (0 == strcmp(interaction->data->custom_id, "skill-level"))
-            react_select_skill_level(cogbot, &params, interaction);
+        else if (0 == strcmp(interaction->data->custom_id, "os"))
+            react_select_OS(cogbot, &params, interaction);
         break;
     default:
         log_error("%s (%d) is not dealt with",
@@ -118,8 +118,12 @@ cogbot_get_primitives(struct discord *cogbot)
     primitives.roles.watcher_id = strtoull(json.start, NULL, 10);
     json = logconf_get_field(conf, "cog_bot.roles.announcements_id");
     primitives.roles.announcements_id = strtoull(json.start, NULL, 10);
-    json = logconf_get_field(conf, "cog_bot.roles.beginner_id");
-    primitives.roles.beginner_id = strtoull(json.start, NULL, 10);
+    json = logconf_get_field(conf, "cog_bot.roles.linux_id");
+    primitives.roles.linux_id = strtoull(json.start, NULL, 10);
+    json = logconf_get_field(conf, "cog_bot.roles.windows_id");
+    primitives.roles.windows_id = strtoull(json.start, NULL, 10);
+    json = logconf_get_field(conf, "cog_bot.roles.macos_id");
+    primitives.roles.macos_id = strtoull(json.start, NULL, 10);
 
     return primitives;
 }
