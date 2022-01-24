@@ -45,6 +45,7 @@
         {
           "type":3,
           "custom_id": "os",
+          "max_values":4,
           "options":[
             {
               "label": "Linux",
