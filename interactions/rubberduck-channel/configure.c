@@ -9,11 +9,11 @@
 /** @brief Per-request context storage for async functions */
 struct context {
     /** the user that triggered the interaction */
-    u64_snowflake_t user_id;
+    u64snowflake user_id;
     /** the client's application id */
-    u64_snowflake_t application_id;
+    u64snowflake application_id;
     /** user's rubberduck channel */
-    u64_snowflake_t channel_id;
+    u64snowflake channel_id;
     /** the interaction token */
     char token[256];
     /** whether rubberduck channel is private */
@@ -96,15 +96,15 @@ react_rubberduck_channel_configure(
     struct discord *cogbot,
     struct discord_interaction_response *params,
     const struct discord_interaction *interaction,
-    struct discord_application_command_interaction_data_option **options)
+    struct discord_application_command_interaction_data_options *options)
 {
     struct discord_guild_member *member = interaction->member;
     char *visibility = NULL;
 
     if (options)
-        for (int i = 0; options[i]; ++i) {
-            char *name = options[i]->name;
-            char *value = options[i]->value;
+        for (int i = 0; i < options->size; ++i) {
+            char *name = options->array[i].name;
+            char *value = options->array[i].value;
 
             if (0 == strcmp(name, "visibility")) visibility = value;
         }
@@ -128,6 +128,5 @@ react_rubberduck_channel_configure(
                             .cleanup = &free,
                         });
 
-    params->type =
-        DISCORD_INTERACTION_CALLBACK_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
+    params->type = DISCORD_INTERACTION_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
 }

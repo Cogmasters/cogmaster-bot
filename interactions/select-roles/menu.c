@@ -13,13 +13,13 @@ react_select_subscriptions_menu(struct discord *cogbot,
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
     struct discord_guild_member *member = interaction->member;
 
-    u64_snowflake_t roles[3] = { 0 };
+    u64snowflake roles[3] = { 0 };
     bool is_reset = false;
 
     /* get channel visibility */
     if (interaction->data->values)
-        for (int i = 0, j = 0; interaction->data->values[i]; ++i) {
-            char *value = interaction->data->values[i]->value;
+        for (int i = 0, j = 0; i < interaction->data->values->size; ++i) {
+            char *value = interaction->data->values->array[i];
 
             if (0 == strcmp(value, "announcements"))
                 roles[j++] = primitives->roles.announcements_id;
@@ -41,7 +41,7 @@ react_select_subscriptions_menu(struct discord *cogbot,
         params->data->content = "Your subscriptions have been reset";
     }
     else {
-        const int arr_size = sizeof(roles) / sizeof(u64_snowflake_t);
+        const int arr_size = sizeof(roles) / sizeof(u64snowflake);
 
         for (int i = 0; roles[i] && i < arr_size; ++i) {
             discord_add_guild_member_role(cogbot, interaction->guild_id,
@@ -60,13 +60,13 @@ react_select_OS(struct discord *cogbot,
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
     struct discord_guild_member *member = interaction->member;
 
-    u64_snowflake_t roles[2] = { 0 };
+    u64snowflake roles[2] = { 0 };
     bool is_reset = false;
 
     /* get channel visibility */
     if (interaction->data->values)
-        for (int i = 0, j = 0; interaction->data->values[i]; ++i) {
-            char *value = interaction->data->values[i]->value;
+        for (int i = 0, j = 0; i < interaction->data->values->size; ++i) {
+            char *value = interaction->data->values->array[i];
 
             if (0 == strcmp(value, "linux"))
                 roles[j++] = primitives->roles.linux_id;
@@ -92,7 +92,7 @@ react_select_OS(struct discord *cogbot,
         params->data->content = "Your OS has been reset";
     }
     else {
-        const int arr_size = sizeof(roles) / sizeof(u64_snowflake_t);
+        const int arr_size = sizeof(roles) / sizeof(u64snowflake);
 
         for (int i = 0; roles[i] && i < arr_size; ++i) {
             discord_add_guild_member_role(cogbot, interaction->guild_id,

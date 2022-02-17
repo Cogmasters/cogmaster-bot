@@ -9,19 +9,19 @@
 /** @brief Per-request context storage for async functions */
 struct context {
     /** the user that triggered the interaction */
-    u64_snowflake_t user_id;
+    u64snowflake user_id;
     /** the client's application id */
-    u64_snowflake_t application_id;
+    u64snowflake application_id;
     /** the interaction token */
     char token[256];
     /** the user to be muted or unmuted */
-    u64_snowflake_t target_id;
+    u64snowflake target_id;
     /**
      * permissions to be denied from user
      *  - PERMS_WRITE: User will have his write access to channel revoked
      *  - 0: User won't be denied write access
      */
-    u64_bitmask_t perms;
+    u64bitmask perms;
 };
 
 static void
@@ -93,17 +93,17 @@ done_get_channel(struct discord *cogbot,
     }
 }
 
-static u64_snowflake_t
+static u64snowflake
 get_unmute_target(
     struct discord_guild_member *member,
-    struct discord_application_command_interaction_data_option **options)
+    struct discord_application_command_interaction_data_options *options)
 {
-    u64_snowflake_t target_id = 0ULL;
+    u64snowflake target_id = 0ULL;
 
     if (options)
-        for (int i = 0; options[i]; ++i) {
-            char *name = options[i]->name;
-            char *value = options[i]->value;
+        for (int i = 0; i < options->size; ++i) {
+            char *name = options->array[i].name;
+            char *value = options->array[i].value;
 
             if (0 == strcmp(name, "user"))
                 target_id = strtoull(value, NULL, 10);
@@ -116,18 +116,18 @@ get_unmute_target(
     return target_id;
 }
 
-static u64_snowflake_t
+static u64snowflake
 get_mute_target(
     struct discord_guild_member *member,
-    struct discord_application_command_interaction_data_option **options)
+    struct discord_application_command_interaction_data_options *options)
 {
-    u64_snowflake_t target_id = 0ULL;
+    u64snowflake target_id = 0ULL;
     char *reason = NULL;
 
     if (options)
-        for (int i = 0; options[i]; ++i) {
-            char *name = options[i]->name;
-            char *value = options[i]->value;
+        for (int i = 0; i < options->size; ++i) {
+            char *name = options->array[i].name;
+            char *value = options->array[i].value;
 
             if (0 == strcmp(name, "user"))
                 target_id = strtoull(value, NULL, 10);
@@ -147,23 +147,24 @@ react_rubberduck_channel_action(
     struct discord *cogbot,
     struct discord_interaction_response *params,
     const struct discord_interaction *interaction,
-    struct discord_application_command_interaction_data_option **options)
+    struct discord_application_command_interaction_data_options *options)
 {
     struct discord_guild_member *member = interaction->member;
 
-    u64_bitmask_t perms;
-    u64_snowflake_t target_id = 0ULL;
+    u64snowflake target_id = 0ULL;
+    u64bitmask perms;
 
     if (options)
-        for (int i = 0; options[i]; ++i) {
-            char *name = options[i]->name;
+        for (int i = 0; i < options->size; ++i) {
+            char *name = options->array[i].name;
 
             if (0 == strcmp(name, "mute")) {
-                target_id = get_mute_target(member, options[i]->options);
+                target_id = get_mute_target(member, options->array[i].options);
                 perms = PERMS_WRITE;
             }
             else if (0 == strcmp(name, "unmute")) {
-                target_id = get_unmute_target(member, options[i]->options);
+                target_id =
+                    get_unmute_target(member, options->array[i].options);
                 perms = 0;
             }
         }
@@ -190,6 +191,5 @@ react_rubberduck_channel_action(
                             .cleanup = &free,
                         });
 
-    params->type =
-        DISCORD_INTERACTION_CALLBACK_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
+    params->type = DISCORD_INTERACTION_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
 }

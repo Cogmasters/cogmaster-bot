@@ -11,28 +11,28 @@
 /** @brief The client environment to work with */
 struct cogbot_primitives {
     /** the guild our client will react to */
-    u64_snowflake_t guild_id;
+    u64snowflake guild_id;
     /** the rubberduck channels category id */
-    u64_snowflake_t category_id;
+    u64snowflake category_id;
     struct {
         /** role for users that own a rubberduck channel */
-        u64_snowflake_t rubberduck_id;
+        u64snowflake rubberduck_id;
         /**
          * role for users that have read/write access to public and private
          *        rubberduck channels
          */
-        u64_snowflake_t helper_id;
+        u64snowflake helper_id;
         /** role for users that want to make public rubberduck channels visible
          */
-        u64_snowflake_t watcher_id;
+        u64snowflake watcher_id;
         /** role for users that want to subscribe to guild announcements */
-        u64_snowflake_t announcements_id;
+        u64snowflake announcements_id;
         /** role for users that are Linux users */
-        u64_snowflake_t linux_id;
+        u64snowflake linux_id;
         /** role for users that are Windows users */
-        u64_snowflake_t windows_id;
+        u64snowflake windows_id;
         /** role for users that are macOS users */
-        u64_snowflake_t macos_id;
+        u64snowflake macos_id;
     } roles;
 };
 
@@ -83,7 +83,7 @@ void react_rubberduck_channel_action(
     struct discord *cogbot,
     struct discord_interaction_response *params,
     const struct discord_interaction *interaction,
-    struct discord_application_command_interaction_data_option **options);
+    struct discord_application_command_interaction_data_options *options);
 
 /**
  * @brief React to rubberduck channel 'delete' command
@@ -97,7 +97,7 @@ void react_rubberduck_channel_delete(
     struct discord *client,
     struct discord_interaction_response *params,
     const struct discord_interaction *interaction,
-    struct discord_application_command_interaction_data_option **options);
+    struct discord_application_command_interaction_data_options *options);
 
 /**
  * @brief React to rubberduck channel configure
@@ -111,7 +111,7 @@ void react_rubberduck_channel_configure(
     struct discord *client,
     struct discord_interaction_response *params,
     const struct discord_interaction *interaction,
-    struct discord_application_command_interaction_data_option **options);
+    struct discord_application_command_interaction_data_options *options);
 
 /******************************************************************************
  * Utility functions
@@ -126,8 +126,8 @@ void react_rubberduck_channel_configure(
  * @return `true` if channel belongs to user
  */
 bool is_user_rubberduck_channel(const struct discord_channel *channel,
-                                u64_snowflake_t rubberduck_category_id,
-                                u64_snowflake_t user_id);
+                                u64snowflake rubberduck_category_id,
+                                u64snowflake user_id);
 
 /**
  * @brief Check if role is included in list
@@ -136,6 +136,6 @@ bool is_user_rubberduck_channel(const struct discord_channel *channel,
  * @param role_id the expected role id
  * @return `true` if role_id is included in roles list
  */
-bool is_included_role(ja_u64 **roles, u64_snowflake_t role_id);
+bool is_included_role(struct snowflakes *roles, u64snowflake role_id);
 
 #endif /* INTERACTIONS_H */

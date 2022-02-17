@@ -9,11 +9,11 @@
 /** @brief Per-request context storage for async functions */
 struct context {
     /** the user that triggered the interaction */
-    u64_snowflake_t user_id;
+    u64snowflake user_id;
     /** the username for channel creation */
     char username[256];
     /** the client's application id */
-    u64_snowflake_t application_id;
+    u64snowflake application_id;
     /** the interaction token */
     char token[256];
     /** whether the channel is private or public */
@@ -70,40 +70,43 @@ done_role_add(struct discord *cogbot, void *data)
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
     struct context *cxt = data;
 
+    struct discord_overwrite overwrites[] = {
+        /* give read/write permission to user */
+        {
+            .id = cxt->user_id,
+            .type = 1,
+            .allow = PERMS_READ | PERMS_WRITE,
+        },
+        /* give read/write permission for @helper */
+        {
+            .id = primitives->roles.helper_id,
+            .type = 0,
+            .allow = PERMS_READ | PERMS_WRITE,
+        },
+        /* hide it from @watcher only if 'priv' has been set */
+        {
+            .id = primitives->roles.watcher_id,
+            .type = 0,
+            .allow = cxt->priv ? 0 : PERMS_READ,
+        },
+        /* give write permissions to @everyone (not read) */
+        {
+            .id = primitives->guild_id,
+            .type = 0,
+            .deny = PERMS_READ,
+            .allow = PERMS_WRITE,
+        },
+    };
+
     /* create user channel */
     discord_create_guild_channel(
         cogbot, primitives->guild_id,
         &(struct discord_create_guild_channel){
             .name = cxt->username,
-            .permission_overwrites =
-                (struct discord_overwrite *[]){
-                    /* give read/write permission to user */
-                    &(struct discord_overwrite){
-                        .id = cxt->user_id,
-                        .type = 1,
-                        .allow = PERMS_READ | PERMS_WRITE,
-                    },
-                    /* give read/write permission for @helper */
-                    &(struct discord_overwrite){
-                        .id = primitives->roles.helper_id,
-                        .type = 0,
-                        .allow = PERMS_READ | PERMS_WRITE,
-                    },
-                    /* hide it from @watcher only if 'priv' has been set */
-                    &(struct discord_overwrite){
-                        .id = primitives->roles.watcher_id,
-                        .type = 0,
-                        .allow = cxt->priv ? 0 : PERMS_READ,
-                    },
-                    /* give write permissions to @everyone (not read) */
-                    &(struct discord_overwrite){
-                        .id = primitives->guild_id,
-                        .type = 0,
-                        .deny = PERMS_READ,
-                        .allow = PERMS_WRITE,
-                    },
-                    NULL, /* END OF OVERWRITE LIST */
-                },
+            .permission_overwrites = &(struct discord_overwrites){
+                .size = sizeof(overwrites) / sizeof *overwrites,
+                .array = overwrites,
+            },
             .parent_id = primitives->category_id,
         },
         &(struct discord_ret_channel){
@@ -154,8 +157,8 @@ react_rubberduck_channel_menu(struct discord *cogbot,
 
     /* get channel visibility */
     if (interaction->data->values)
-        for (int i = 0; interaction->data->values[i]; ++i) {
-            char *value = interaction->data->values[i]->value;
+        for (int i = 0; i < interaction->data->values->size; ++i) {
+            char *value = interaction->data->values->array[i];
 
             if (0 == strcmp(value, "private")) priv = true;
         }
@@ -181,6 +184,5 @@ react_rubberduck_channel_menu(struct discord *cogbot,
                                       .cleanup = &free,
                                   });
 
-    params->type =
-        DISCORD_INTERACTION_CALLBACK_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
+    params->type = DISCORD_INTERACTION_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
 }

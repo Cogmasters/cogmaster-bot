@@ -19,10 +19,10 @@ on_interaction_create(struct discord *cogbot,
 
     /* initialize interaction response with some default values */
     struct discord_interaction_response params = {
-        .type = DISCORD_INTERACTION_CALLBACK_CHANNEL_MESSAGE_WITH_SOURCE,
+        .type = DISCORD_INTERACTION_CHANNEL_MESSAGE_WITH_SOURCE,
         .data =
             &(struct discord_interaction_callback_data){
-                .flags = DISCORD_INTERACTION_CALLBACK_DATA_EPHEMERAL,
+                .flags = DISCORD_MESSAGE_EPHEMERAL,
                 .content = "⚠️ Internal Error! Interaction is "
                            "malfunctioning, please "
                            "report to the staff.",
@@ -34,23 +34,23 @@ on_interaction_create(struct discord *cogbot,
         if (0 == strcmp(interaction->data->name, "mychannel")) {
 
             if (interaction->data->options)
-                for (int i = 0; interaction->data->options[i]; ++i) {
-                    char *cmd = interaction->data->options[i]->name;
+                for (int i = 0; i < interaction->data->options->size; ++i) {
+                    char *cmd = interaction->data->options->array[i].name;
 
                     if (0 == strcmp(cmd, "action")) {
                         react_rubberduck_channel_action(
                             cogbot, &params, interaction,
-                            interaction->data->options[i]->options);
+                            interaction->data->options->array[i].options);
                     }
                     else if (0 == strcmp(cmd, "configure")) {
                         react_rubberduck_channel_configure(
                             cogbot, &params, interaction,
-                            interaction->data->options[i]->options);
+                            interaction->data->options->array[i].options);
                     }
                     else if (0 == strcmp(cmd, "delete")) {
                         react_rubberduck_channel_delete(
                             cogbot, &params, interaction,
-                            interaction->data->options[i]->options);
+                            interaction->data->options->array[i].options);
                     }
                 }
         }
@@ -66,8 +66,7 @@ on_interaction_create(struct discord *cogbot,
             react_select_OS(cogbot, &params, interaction);
         break;
     default:
-        log_error("%s (%d) is not dealt with",
-                  discord_interaction_types_print(interaction->type),
+        log_error("Interaction (%d code) is not dealt with",
                   interaction->type);
         break;
     }
@@ -100,29 +99,46 @@ cogbot_get_primitives(struct discord *cogbot)
     struct cogbot_primitives primitives = { 0 };
     struct sized_buffer json;
     struct logconf *conf = discord_get_logconf(cogbot);
+    char *path[3] = { "cog_bot", "", "" };
 
-    /* get guild id */
-    json = logconf_get_field(conf, "cog_bot.guild_id");
+    /* cog_bot.guild_id */
+    path[1] = "guild_id";
+    json = logconf_get_field(conf, path, 2);
     primitives.guild_id = strtoull(json.start, NULL, 10);
 
-    /* get rubberduck channels category id */
-    json = logconf_get_field(conf, "cog_bot.category_id");
+    /* cog_bot.category_id */
+    path[1] = "category_id";
+    json = logconf_get_field(conf, path, 2);
     primitives.category_id = strtoull(json.start, NULL, 10);
 
-    /* get roles */
-    json = logconf_get_field(conf, "cog_bot.roles.rubberduck_id");
+    /* cog_bot.roles.rubberduck_id */
+    path[1] = "roles";
+    path[2] = "rubberduck_id";
+    json = logconf_get_field(conf, path, 3);
     primitives.roles.rubberduck_id = strtoull(json.start, NULL, 10);
-    json = logconf_get_field(conf, "cog_bot.roles.helper_id");
+    /* cog_bot.roles.helper_id */
+    path[2] = "helper_id";
+    json = logconf_get_field(conf, path, 3);
     primitives.roles.helper_id = strtoull(json.start, NULL, 10);
-    json = logconf_get_field(conf, "cog_bot.roles.watcher_id");
+    /* cog_bot.roles.watcher_id */
+    path[2] = "watcher_id";
+    json = logconf_get_field(conf, path, 3);
     primitives.roles.watcher_id = strtoull(json.start, NULL, 10);
-    json = logconf_get_field(conf, "cog_bot.roles.announcements_id");
+    /* cog_bot.roles.announcements_id */
+    path[2] = "announcements_id";
+    json = logconf_get_field(conf, path, 3);
     primitives.roles.announcements_id = strtoull(json.start, NULL, 10);
-    json = logconf_get_field(conf, "cog_bot.roles.linux_id");
+    /* cog_bot.roles.linux_id */
+    path[2] = "linux_id";
+    json = logconf_get_field(conf, path, 3);
     primitives.roles.linux_id = strtoull(json.start, NULL, 10);
-    json = logconf_get_field(conf, "cog_bot.roles.windows_id");
+    /* cog_bot.roles.windows_id */
+    path[2] = "windows_id";
+    json = logconf_get_field(conf, path, 3);
     primitives.roles.windows_id = strtoull(json.start, NULL, 10);
-    json = logconf_get_field(conf, "cog_bot.roles.macos_id");
+    /* cog_bot.roles.macos_id */
+    path[2] = "macos_id";
+    json = logconf_get_field(conf, path, 3);
     primitives.roles.macos_id = strtoull(json.start, NULL, 10);
 
     return primitives;
