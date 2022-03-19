@@ -75,6 +75,15 @@
               }
             },
             {
+              "label": "BSD",
+              "value": "bsd",
+              "description": "I'm a BSD user",
+              "emoji": {
+                "name": ":bsd:",
+                "id":"928814867094323210"
+              }
+            },
+            {
               "label": "Reset",
               "value": "reset",
               "description": "Reset my OS",

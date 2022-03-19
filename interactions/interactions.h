@@ -33,6 +33,8 @@ struct cogbot_primitives {
         u64snowflake windows_id;
         /** role for users that are macOS users */
         u64snowflake macos_id;
+        /** role for users that are BSD users */
+        u64snowflake bsd_id;
     } roles;
 };
 

@@ -74,6 +74,8 @@ react_select_OS(struct discord *cogbot,
                 roles[j++] = primitives->roles.windows_id;
             if (0 == strcmp(value, "macos"))
                 roles[j++] = primitives->roles.macos_id;
+            if (0 == strcmp(value, "bsd"))
+                roles[j++] = primitives->roles.bsd_id;
             else if (0 == strcmp(value, "reset"))
                 is_reset = true;
         }
@@ -88,8 +90,11 @@ react_select_OS(struct discord *cogbot,
         discord_remove_guild_member_role(cogbot, interaction->guild_id,
                                          member->user->id,
                                          primitives->roles.macos_id, NULL);
+        discord_remove_guild_member_role(cogbot, interaction->guild_id,
+                                         member->user->id,
+                                         primitives->roles.bsd_id, NULL);
 
-        params->data->content = "Your OS has been reset";
+        params->data->content = "Your OS choice has been reset";
     }
     else {
         const int arr_size = sizeof(roles) / sizeof(u64snowflake);
@@ -99,6 +104,6 @@ react_select_OS(struct discord *cogbot,
                                           member->user->id, roles[i], NULL);
         }
 
-        params->data->content = "Your OS has been set";
+        params->data->content = "Your OS choice has been set";
     }
 }
