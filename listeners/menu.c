@@ -14,7 +14,9 @@ get_guild(struct discord *cogbot)
     struct sized_buffer guild_id = { 0 };
     CCORDcode code;
 
-    guild_id = logconf_get_field(conf, "cog_bot.guild_id");
+    char *path[] = { "cog_bot", "guild_id" };
+
+    guild_id = logconf_get_field(conf, path, 2);
     assert(guild_id.size != 0 && "Missing cog_bot.guild_id");
 
     code = discord_get_guild(cogbot, strtoull(guild_id.start, NULL, 10),
@@ -33,7 +35,7 @@ get_guild(struct discord *cogbot)
 struct discord_create_message *
 get_components(const char fname[])
 {
-    struct discord_create_message *params = NULL;
+    struct discord_create_message *params = malloc(sizeof *params);
     size_t fsize = 0;
     char *fcontents;
 
@@ -41,7 +43,7 @@ get_components(const char fname[])
     assert(fcontents != NULL && "Missing file");
     assert(fsize != 0 && "Empty file");
 
-    discord_create_message_from_json_p(fcontents, fsize, &params);
+    discord_create_message_from_json(fcontents, fsize, params);
 
     return params;
 }
