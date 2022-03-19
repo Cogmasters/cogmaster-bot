@@ -128,6 +128,10 @@ cogbot_get_primitives(struct discord *cogbot)
     path[2] = "macos_id";
     json = logconf_get_field(conf, path, 3);
     primitives.roles.macos_id = strtoull(json.start, NULL, 10);
+    /* cog_bot.roles.bsd_id */
+    path[2] = "bsd_id";
+    json = logconf_get_field(conf, path, 3);
+    primitives.roles.bsd_id = strtoull(json.start, NULL, 10);
 
     return primitives;
 }
