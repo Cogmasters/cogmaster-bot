@@ -49,7 +49,7 @@ struct discord_create_guild_application_command *
 get_application_commands(const char fname[])
 {
     struct discord_create_guild_application_command *params =
-        malloc(sizeof *params);
+        calloc(1, sizeof *params);
     size_t fsize = 0;
     char *fcontents;
 

@@ -35,7 +35,7 @@ get_guild(struct discord *cogbot)
 struct discord_create_message *
 get_components(const char fname[])
 {
-    struct discord_create_message *params = malloc(sizeof *params);
+    struct discord_create_message *params = calloc(1, sizeof *params);
     size_t fsize = 0;
     char *fcontents;
 
