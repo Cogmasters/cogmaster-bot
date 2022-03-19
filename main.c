@@ -1,14 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <assert.h>
 
 #include <concord/discord.h>
 
 #include "interactions.h"
-
-struct discord *cogbot;
 
 void
 on_interaction_create(struct discord *cogbot,
@@ -75,15 +72,6 @@ on_interaction_create(struct discord *cogbot,
                                         interaction->token, &params, NULL);
 }
 
-/* shutdown gracefully on SIGINT received */
-void
-sigint_handler(int signum)
-{
-    (void)signum;
-    log_info("SIGINT received, shutting down ...");
-    discord_shutdown(cogbot);
-}
-
 void
 on_ready(struct discord *cogbot)
 {
@@ -148,8 +136,8 @@ int
 main(int argc, char *argv[])
 {
     struct cogbot_primitives primitives;
+    struct discord *cogbot;
 
-    signal(SIGINT, &sigint_handler);
     ccord_global_init();
 
     cogbot = discord_config_init((argc > 1) ? argv[1] : "config.json");
