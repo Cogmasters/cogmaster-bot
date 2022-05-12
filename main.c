@@ -73,64 +73,62 @@ on_interaction_create(struct discord *cogbot,
 }
 
 void
-on_ready(struct discord *cogbot)
+on_ready(struct discord *cogbot, const struct discord_ready *event)
 {
-    const struct discord_user *bot = discord_get_self(cogbot);
-
+    (void)cogbot;
     log_info("Cog-Bot succesfully connected to Discord as %s#%s!",
-             bot->username, bot->discriminator);
+             event->user->username, event->user->discriminator);
 }
 
 struct cogbot_primitives
 cogbot_get_primitives(struct discord *cogbot)
 {
     struct cogbot_primitives primitives = { 0 };
-    struct sized_buffer json;
-    struct logconf *conf = discord_get_logconf(cogbot);
     char *path[3] = { "cog_bot", "", "" };
+    struct ccord_szbuf_readonly json;
 
     /* cog_bot.guild_id */
     path[1] = "guild_id";
-    json = logconf_get_field(conf, path, 2);
+    json = discord_config_get_field(cogbot, path, 2);
     primitives.guild_id = strtoull(json.start, NULL, 10);
 
     /* cog_bot.category_id */
     path[1] = "category_id";
-    json = logconf_get_field(conf, path, 2);
+    json = discord_config_get_field(cogbot, path, 2);
     primitives.category_id = strtoull(json.start, NULL, 10);
 
     /* cog_bot.roles.rubberduck_id */
     path[1] = "roles";
     path[2] = "rubberduck_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.rubberduck_id = strtoull(json.start, NULL, 10);
     /* cog_bot.roles.helper_id */
     path[2] = "helper_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.helper_id = strtoull(json.start, NULL, 10);
     /* cog_bot.roles.watcher_id */
     path[2] = "watcher_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.watcher_id = strtoull(json.start, NULL, 10);
     /* cog_bot.roles.announcements_id */
     path[2] = "announcements_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.announcements_id = strtoull(json.start, NULL, 10);
     /* cog_bot.roles.linux_id */
     path[2] = "linux_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.linux_id = strtoull(json.start, NULL, 10);
     /* cog_bot.roles.windows_id */
     path[2] = "windows_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.windows_id = strtoull(json.start, NULL, 10);
     /* cog_bot.roles.macos_id */
     path[2] = "macos_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.macos_id = strtoull(json.start, NULL, 10);
     /* cog_bot.roles.bsd_id */
     path[2] = "bsd_id";
-    json = logconf_get_field(conf, path, 3);
+    json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.bsd_id = strtoull(json.start, NULL, 10);
 
     return primitives;
