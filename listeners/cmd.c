@@ -9,13 +9,12 @@ struct discord_guild *
 get_guild(struct discord *cogbot)
 {
     struct discord_guild *guild = calloc(1, sizeof *guild);
-    struct logconf *conf = discord_get_logconf(cogbot);
-    struct sized_buffer guild_id = { 0 };
+    char *path[] = { "cog_bot", "guild_id" };
+    struct ccord_szbuf_readonly guild_id;
     CCORDcode code;
 
-    char *path[] = { "cog_bot", "guild_id" };
 
-    guild_id = logconf_get_field(conf, path, 2);
+    guild_id = discord_config_get_field(cogbot, path, 2);
     assert(guild_id.size != 0 && "Missing cog_bot.guild_id");
 
     code = discord_get_guild(cogbot, strtoull(guild_id.start, NULL, 10),
@@ -34,12 +33,10 @@ get_guild(struct discord *cogbot)
 u64snowflake
 get_application_id(struct discord *cogbot)
 {
-    struct logconf *conf = discord_get_logconf(cogbot);
-    struct sized_buffer app_id = { 0 };
-
     char *path[] = { "cog_bot", "application_id" };
+    struct ccord_szbuf_readonly app_id = { 0 };
 
-    app_id = logconf_get_field(conf, path, 2);
+    app_id = discord_config_get_field(cogbot, path, 2);
     assert(app_id.size != 0 && "Missing cog_bot.application_id");
 
     return (u64snowflake)strtoull(app_id.start, NULL, 10);

@@ -8,24 +8,26 @@
 
 /** @brief Per-request context storage for async functions */
 struct context {
-    /** the user that triggered the interaction */
-    u64snowflake user_id;
-    /** the username for channel creation */
-    char username[256];
-    /** the client's application id */
-    u64snowflake application_id;
-    /** the interaction token */
-    char token[256];
+    /** the current interaction */
+    const struct discord_interaction *interaction;
     /** whether the channel is private or public */
     bool priv;
 };
 
 static void
+context_cleanup(struct discord *cogbot, void *p_cxt)
+{
+    struct context *cxt = p_cxt;
+    discord_unclaim(cogbot, cxt->interaction);
+    free(cxt);
+}
+
+static void
 done_create_channel(struct discord *cogbot,
-                    void *data,
+                    struct discord_response *resp,
                     const struct discord_channel *channel)
 {
-    struct context *cxt = data;
+    struct context *cxt = resp->data;
 
     char welcome_msg[DISCORD_MAX_MESSAGE_LEN];
 
@@ -34,7 +36,7 @@ done_create_channel(struct discord *cogbot,
         "Welcome <@!%" PRIu64 ">, "
         "I hope you enjoy your new space! Check your available commands by "
         "typing `/mychannel` for further channel customization!",
-        cxt->user_id);
+        cxt->interaction->member->user->id);
 
     discord_create_message(cogbot, channel->id,
                            &(struct discord_create_message){
@@ -43,7 +45,7 @@ done_create_channel(struct discord *cogbot,
                            NULL);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->application_id, cxt->token,
+        cogbot, cxt->interaction->application_id, cxt->interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = "Your channel has been created!",
         },
@@ -51,13 +53,12 @@ done_create_channel(struct discord *cogbot,
 }
 
 static void
-fail_create_channel(struct discord *cogbot, CCORDcode code, void *data)
+fail_create_channel(struct discord *cogbot, struct discord_response *resp)
 {
-    struct context *cxt = data;
-    (void)code;
+    struct context *cxt = resp->data;
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->application_id, cxt->token,
+        cogbot, cxt->interaction->application_id, cxt->interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = "Couldn't create channel, please report to our staff.",
         },
@@ -65,15 +66,15 @@ fail_create_channel(struct discord *cogbot, CCORDcode code, void *data)
 }
 
 static void
-done_role_add(struct discord *cogbot, void *data)
+done_role_add(struct discord *cogbot, struct discord_response *resp)
 {
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
-    struct context *cxt = data;
+    struct context *cxt = resp->data;
 
     struct discord_overwrite overwrites[] = {
         /* give read/write permission to user */
         {
-            .id = cxt->user_id,
+            .id = cxt->interaction->member->user->id,
             .type = 1,
             .allow = PERMS_READ | PERMS_WRITE,
         },
@@ -102,11 +103,12 @@ done_role_add(struct discord *cogbot, void *data)
     discord_create_guild_channel(
         cogbot, primitives->guild_id,
         &(struct discord_create_guild_channel){
-            .name = cxt->username,
-            .permission_overwrites = &(struct discord_overwrites){
-                .size = sizeof(overwrites) / sizeof *overwrites,
-                .array = overwrites,
-            },
+            .name = cxt->interaction->member->user->username,
+            .permission_overwrites =
+                &(struct discord_overwrites){
+                    .size = sizeof(overwrites) / sizeof *overwrites,
+                    .array = overwrites,
+                },
             .parent_id = primitives->category_id,
         },
         &(struct discord_ret_channel){
@@ -117,11 +119,10 @@ done_role_add(struct discord *cogbot, void *data)
 }
 
 static void
-fail_role_add(struct discord *cogbot, CCORDcode code, void *data)
+fail_role_add(struct discord *cogbot, struct discord_response *resp)
 {
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
-    struct context *cxt = data;
-    (void)code;
+    struct context *cxt = resp->data;
 
     char diagnosis[256];
 
@@ -131,7 +132,7 @@ fail_role_add(struct discord *cogbot, CCORDcode code, void *data)
              primitives->roles.rubberduck_id);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->application_id, cxt->token,
+        cogbot, cxt->interaction->application_id, cxt->interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = diagnosis,
         },
@@ -144,12 +145,12 @@ react_rubberduck_channel_menu(struct discord *cogbot,
                               const struct discord_interaction *interaction)
 {
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
-
-    struct discord_guild_member *member = interaction->member;
     bool priv = false;
 
     /* skip user with already assigned channel */
-    if (is_included_role(member->roles, primitives->roles.rubberduck_id)) {
+    if (is_included_role(interaction->member->roles,
+                         primitives->roles.rubberduck_id))
+    {
         params->data->content =
             "It seems you already have a channel, please edit it from within";
         return;
@@ -165,23 +166,19 @@ react_rubberduck_channel_menu(struct discord *cogbot,
 
     struct context *cxt = malloc(sizeof *cxt);
     *cxt = (struct context){
-        .user_id = member->user->id,
-        .application_id = interaction->application_id,
+        .interaction = discord_claim(cogbot, interaction),
         .priv = priv,
     };
-    snprintf(cxt->username, sizeof(cxt->username), "%s",
-             member->user->username);
-    snprintf(cxt->token, sizeof(cxt->token), "%s", interaction->token);
 
     /* assign channel owner role to user */
     discord_add_guild_member_role(cogbot, primitives->guild_id,
-                                  member->user->id,
+                                  interaction->member->user->id,
                                   primitives->roles.rubberduck_id,
                                   &(struct discord_ret){
                                       .done = &done_role_add,
                                       .fail = &fail_role_add,
                                       .data = cxt,
-                                      .cleanup = &free,
+                                      .cleanup = &context_cleanup,
                                   });
 
     params->type = DISCORD_INTERACTION_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
