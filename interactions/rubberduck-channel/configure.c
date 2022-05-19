@@ -8,8 +8,6 @@
 
 /** @brief Per-request context storage for async functions */
 struct context {
-    /** the current interaction */
-    const struct discord_interaction *interaction;
     /** user's rubberduck channel */
     u64snowflake channel_id;
     /** whether rubberduck channel is private */
@@ -19,14 +17,14 @@ struct context {
 static void
 context_cleanup(struct discord *cogbot, void *p_cxt)
 {
-    struct context *cxt = p_cxt;
-    discord_unclaim(cogbot, cxt->interaction);
-    free(cxt);
+    (void)cogbot;
+    free(p_cxt);
 }
 
 static void
 done_edit_permissions(struct discord *cogbot, struct discord_response *resp)
 {
+    const struct discord_interaction *interaction = resp->keep;
     struct context *cxt = resp->data;
     char diagnosis[256];
 
@@ -34,7 +32,7 @@ done_edit_permissions(struct discord *cogbot, struct discord_response *resp)
              "Completed action targeted to <#%" PRIu64 ">.", cxt->channel_id);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->interaction->application_id, cxt->interaction->token,
+        cogbot, interaction->application_id, interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = diagnosis,
         },
@@ -44,6 +42,7 @@ done_edit_permissions(struct discord *cogbot, struct discord_response *resp)
 static void
 fail_edit_permissions(struct discord *cogbot, struct discord_response *resp)
 {
+    const struct discord_interaction *interaction = resp->keep;
     struct context *cxt = resp->data;
     char diagnosis[256];
 
@@ -51,7 +50,7 @@ fail_edit_permissions(struct discord *cogbot, struct discord_response *resp)
              "Failed action targeted to <#%" PRIu64 ">.", cxt->channel_id);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->interaction->application_id, cxt->interaction->token,
+        cogbot, interaction->application_id, interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = diagnosis,
         },
@@ -64,19 +63,20 @@ done_get_channel(struct discord *cogbot,
                  const struct discord_channel *channel)
 {
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
-    struct context *cxt = resp->data;
+    const struct discord_interaction *interaction = resp->keep;
 
     if (!is_user_rubberduck_channel(channel, primitives->category_id,
-                                    cxt->interaction->member->user->id))
+                                    interaction->member->user->id))
     {
         discord_edit_original_interaction_response(
-            cogbot, cxt->interaction->application_id, cxt->interaction->token,
+            cogbot, interaction->application_id, interaction->token,
             &(struct discord_edit_original_interaction_response){
                 .content = "Couldn't complete operation. Make sure to use "
                            "`/mycommand` from your channel" },
             NULL);
     }
     else {
+        struct context *cxt = resp->data;
         cxt->channel_id = channel->id;
 
         /* edit user channel */
@@ -89,7 +89,9 @@ done_get_channel(struct discord *cogbot,
             &(struct discord_ret){
                 .done = &done_edit_permissions,
                 .fail = &fail_edit_permissions,
+                .keep = interaction,
                 .data = cxt,
+                .cleanup = &context_cleanup,
             });
     }
 }
@@ -118,7 +120,6 @@ react_rubberduck_channel_configure(
 
     struct context *cxt = malloc(sizeof *cxt);
     *cxt = (struct context){
-        .interaction = discord_claim(cogbot, interaction),
         .priv = (0 == strcmp(visibility, "private")),
     };
 
@@ -126,6 +127,7 @@ react_rubberduck_channel_configure(
                         &(struct discord_ret_channel){
                             .done = &done_get_channel,
                             .fail = &fail_edit_permissions,
+                            .keep = interaction,
                             .data = cxt,
                             .cleanup = &context_cleanup,
                         });
