@@ -8,29 +8,31 @@
 
 /** @brief Per-request context storage for async functions */
 struct context {
-    /** the user that triggered the interaction */
-    u64snowflake user_id;
-    /** the client's application id */
-    u64snowflake application_id;
     /** user's rubberduck channel */
     u64snowflake channel_id;
-    /** the interaction token */
-    char token[256];
     /** whether rubberduck channel is private */
     bool priv;
 };
 
 static void
-done_edit_permissions(struct discord *cogbot, void *data)
+context_cleanup(struct discord *cogbot, void *p_cxt)
 {
-    struct context *cxt = data;
+    (void)cogbot;
+    free(p_cxt);
+}
+
+static void
+done_edit_permissions(struct discord *cogbot, struct discord_response *resp)
+{
+    const struct discord_interaction *interaction = resp->keep;
+    struct context *cxt = resp->data;
     char diagnosis[256];
 
     snprintf(diagnosis, sizeof(diagnosis),
              "Completed action targeted to <#%" PRIu64 ">.", cxt->channel_id);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->application_id, cxt->token,
+        cogbot, interaction->application_id, interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = diagnosis,
         },
@@ -38,17 +40,17 @@ done_edit_permissions(struct discord *cogbot, void *data)
 }
 
 static void
-fail_edit_permissions(struct discord *cogbot, CCORDcode code, void *data)
+fail_edit_permissions(struct discord *cogbot, struct discord_response *resp)
 {
-    struct context *cxt = data;
+    const struct discord_interaction *interaction = resp->keep;
+    struct context *cxt = resp->data;
     char diagnosis[256];
-    (void)code;
 
     snprintf(diagnosis, sizeof(diagnosis),
              "Failed action targeted to <#%" PRIu64 ">.", cxt->channel_id);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->application_id, cxt->token,
+        cogbot, interaction->application_id, interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = diagnosis,
         },
@@ -57,23 +59,24 @@ fail_edit_permissions(struct discord *cogbot, CCORDcode code, void *data)
 
 static void
 done_get_channel(struct discord *cogbot,
-                 void *data,
+                 struct discord_response *resp,
                  const struct discord_channel *channel)
 {
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
-    struct context *cxt = data;
+    const struct discord_interaction *interaction = resp->keep;
 
     if (!is_user_rubberduck_channel(channel, primitives->category_id,
-                                    cxt->user_id))
+                                    interaction->member->user->id))
     {
         discord_edit_original_interaction_response(
-            cogbot, cxt->application_id, cxt->token,
+            cogbot, interaction->application_id, interaction->token,
             &(struct discord_edit_original_interaction_response){
                 .content = "Couldn't complete operation. Make sure to use "
                            "`/mycommand` from your channel" },
             NULL);
     }
     else {
+        struct context *cxt = resp->data;
         cxt->channel_id = channel->id;
 
         /* edit user channel */
@@ -86,7 +89,9 @@ done_get_channel(struct discord *cogbot,
             &(struct discord_ret){
                 .done = &done_edit_permissions,
                 .fail = &fail_edit_permissions,
+                .keep = interaction,
                 .data = cxt,
+                .cleanup = &context_cleanup,
             });
     }
 }
@@ -98,7 +103,6 @@ react_rubberduck_channel_configure(
     const struct discord_interaction *interaction,
     struct discord_application_command_interaction_data_options *options)
 {
-    struct discord_guild_member *member = interaction->member;
     char *visibility = NULL;
 
     if (options)
@@ -115,17 +119,17 @@ react_rubberduck_channel_configure(
     }
 
     struct context *cxt = malloc(sizeof *cxt);
-    cxt->user_id = member->user->id;
-    cxt->application_id = interaction->application_id;
-    snprintf(cxt->token, sizeof(cxt->token), "%s", interaction->token);
-    cxt->priv = (0 == strcmp(visibility, "private"));
+    *cxt = (struct context){
+        .priv = (0 == strcmp(visibility, "private")),
+    };
 
     discord_get_channel(cogbot, interaction->channel_id,
                         &(struct discord_ret_channel){
                             .done = &done_get_channel,
                             .fail = &fail_edit_permissions,
+                            .keep = interaction,
                             .data = cxt,
-                            .cleanup = &free,
+                            .cleanup = &context_cleanup,
                         });
 
     params->type = DISCORD_INTERACTION_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;

@@ -8,12 +8,6 @@
 
 /** @brief Per-request context storage for async functions */
 struct context {
-    /** the user that triggered the interaction */
-    u64snowflake user_id;
-    /** the client's application id */
-    u64snowflake application_id;
-    /** the interaction token */
-    char token[256];
     /** the user to be muted or unmuted */
     u64snowflake target_id;
     /**
@@ -25,16 +19,24 @@ struct context {
 };
 
 static void
-done_edit_permissions(struct discord *cogbot, void *data)
+context_cleanup(struct discord *cogbot, void *p_cxt)
 {
-    struct context *cxt = data;
+    (void)cogbot;
+    free(p_cxt);
+}
+
+static void
+done_edit_permissions(struct discord *cogbot, struct discord_response *resp)
+{
+    const struct discord_interaction *interaction = resp->keep;
+    struct context *cxt = resp->data;
     char diagnosis[256];
 
     snprintf(diagnosis, sizeof(diagnosis),
              "Completed action targeted to <@!%" PRIu64 ">.", cxt->target_id);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->application_id, cxt->token,
+        cogbot, interaction->application_id, interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = diagnosis,
         },
@@ -42,17 +44,17 @@ done_edit_permissions(struct discord *cogbot, void *data)
 }
 
 static void
-fail_edit_permissions(struct discord *cogbot, CCORDcode code, void *data)
+fail_edit_permissions(struct discord *cogbot, struct discord_response *resp)
 {
-    struct context *cxt = data;
+    const struct discord_interaction *interaction = resp->keep;
+    struct context *cxt = resp->data;
     char diagnosis[256];
-    (void)code;
 
     snprintf(diagnosis, sizeof(diagnosis),
              "Failed action targeted to <@!%" PRIu64 ">", cxt->target_id);
 
     discord_edit_original_interaction_response(
-        cogbot, cxt->application_id, cxt->token,
+        cogbot, interaction->application_id, interaction->token,
         &(struct discord_edit_original_interaction_response){
             .content = diagnosis,
         },
@@ -61,17 +63,17 @@ fail_edit_permissions(struct discord *cogbot, CCORDcode code, void *data)
 
 static void
 done_get_channel(struct discord *cogbot,
-                 void *data,
+                 struct discord_response *resp,
                  const struct discord_channel *channel)
 {
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
-    struct context *cxt = data;
+    const struct discord_interaction *interaction = resp->keep;
 
     if (!is_user_rubberduck_channel(channel, primitives->category_id,
-                                    cxt->user_id))
+                                    interaction->member->user->id))
     {
         discord_edit_original_interaction_response(
-            cogbot, cxt->application_id, cxt->token,
+            cogbot, interaction->application_id, interaction->token,
             &(struct discord_edit_original_interaction_response){
                 .content = "Couldn't complete operation. Make sure to use "
                            "`/mycommand` from your channel",
@@ -79,6 +81,8 @@ done_get_channel(struct discord *cogbot,
             NULL);
     }
     else {
+        struct context *cxt = resp->data;
+
         discord_edit_channel_permissions(
             cogbot, channel->id, cxt->target_id,
             &(struct discord_edit_channel_permissions){
@@ -88,7 +92,9 @@ done_get_channel(struct discord *cogbot,
             &(struct discord_ret){
                 .done = &done_edit_permissions,
                 .fail = &fail_edit_permissions,
+                .keep = interaction,
                 .data = cxt,
+                .cleanup = &context_cleanup,
             });
     }
 }
@@ -149,8 +155,6 @@ react_rubberduck_channel_action(
     const struct discord_interaction *interaction,
     struct discord_application_command_interaction_data_options *options)
 {
-    struct discord_guild_member *member = interaction->member;
-
     u64snowflake target_id = 0ULL;
     u64bitmask perms;
 
@@ -159,36 +163,35 @@ react_rubberduck_channel_action(
             char *name = options->array[i].name;
 
             if (0 == strcmp(name, "mute")) {
-                target_id = get_mute_target(member, options->array[i].options);
+                target_id = get_mute_target(interaction->member,
+                                            options->array[i].options);
                 perms = PERMS_WRITE;
             }
             else if (0 == strcmp(name, "unmute")) {
-                target_id =
-                    get_unmute_target(member, options->array[i].options);
+                target_id = get_unmute_target(interaction->member,
+                                              options->array[i].options);
                 perms = 0;
             }
         }
 
-    if (target_id == member->user->id) {
+    if (target_id == interaction->member->user->id) {
         params->data->content = "You can't mute yourself!";
         return;
     }
 
     struct context *cxt = malloc(sizeof *cxt);
     *cxt = (struct context){
-        .user_id = member->user->id,
-        .application_id = interaction->application_id,
         .target_id = target_id,
         .perms = perms,
     };
-    snprintf(cxt->token, sizeof(cxt->token), "%s", interaction->token);
 
     discord_get_channel(cogbot, interaction->channel_id,
                         &(struct discord_ret_channel){
                             .done = &done_get_channel,
                             .fail = &fail_edit_permissions,
+                            .keep = interaction,
                             .data = cxt,
-                            .cleanup = &free,
+                            .cleanup = &context_cleanup,
                         });
 
     params->type = DISCORD_INTERACTION_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE;
