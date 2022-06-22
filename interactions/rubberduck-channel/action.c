@@ -3,6 +3,7 @@
 #include <inttypes.h> /* PRIu64 */
 
 #include <concord/discord.h>
+#include <concord/log.h>
 
 #include "interactions.h"
 
