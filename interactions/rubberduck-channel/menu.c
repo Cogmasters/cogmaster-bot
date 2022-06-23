@@ -131,6 +131,14 @@ react_rubberduck_channel_menu(struct discord *cogbot,
     struct cogbot_primitives *primitives = discord_get_data(cogbot);
     bool priv = false;
 
+    /* skip user that is not verified */
+    if (!is_included_role(interaction->member->roles,
+                          primitives->roles.verified_id))
+    {
+        params->data->content =
+            "It seems you have not yet been verified by mods";
+        return;
+    }
     /* skip user with already assigned channel */
     if (is_included_role(interaction->member->roles,
                          primitives->roles.rubberduck_id))

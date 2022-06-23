@@ -15,6 +15,8 @@ struct cogbot_primitives {
     /** the rubberduck channels category id */
     u64snowflake category_id;
     struct {
+        /** role for users that have been verified by mods */
+        u64snowflake verified_id;
         /** role for users that own a rubberduck channel */
         u64snowflake rubberduck_id;
         /**

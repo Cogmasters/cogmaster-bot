@@ -29,37 +29,36 @@ on_interaction_create(struct discord *cogbot,
 
     switch (interaction->type) {
     case DISCORD_INTERACTION_APPLICATION_COMMAND:
-        if (0 == strcmp(interaction->data->name, "mychannel")) {
+        if (interaction->data->options
+            && 0 == strcmp(interaction->data->name, "mychannel")) {
 
-            if (interaction->data->options)
-                for (int i = 0; i < interaction->data->options->size; ++i) {
-                    char *cmd = interaction->data->options->array[i].name;
+            for (int i = 0; i < interaction->data->options->size; ++i) {
+                char *cmd = interaction->data->options->array[i].name;
 
-                    if (0 == strcmp(cmd, "action")) {
-                        react_rubberduck_channel_action(
-                            cogbot, &params, interaction,
-                            interaction->data->options->array[i].options);
-                    }
-                    else if (0 == strcmp(cmd, "configure")) {
-                        react_rubberduck_channel_configure(
-                            cogbot, &params, interaction,
-                            interaction->data->options->array[i].options);
-                    }
-                    else if (0 == strcmp(cmd, "delete")) {
-                        react_rubberduck_channel_delete(
-                            cogbot, &params, interaction,
-                            interaction->data->options->array[i].options);
-                    }
-                }
+                if (0 == strcmp(cmd, "action"))
+                    react_rubberduck_channel_action(
+                        cogbot, &params, interaction,
+                        interaction->data->options->array[i].options);
+                else if (0 == strcmp(cmd, "configure"))
+                    react_rubberduck_channel_configure(
+                        cogbot, &params, interaction,
+                        interaction->data->options->array[i].options);
+                else if (0 == strcmp(cmd, "create"))
+                    react_rubberduck_channel_create(
+                        cogbot, &params, interaction,
+                        interaction->data->options->array[i].options);
+                else if (0 == strcmp(cmd, "delete"))
+                    react_rubberduck_channel_delete(
+                        cogbot, &params, interaction,
+                        interaction->data->options->array[i].options);
+            }
         }
         break;
     case DISCORD_INTERACTION_MESSAGE_COMPONENT:
-        if (0 == strcmp(interaction->data->custom_id, "create-channel"))
-            react_rubberduck_channel_menu(cogbot, &params, interaction);
-        else if (0
-                 == strcmp(interaction->data->custom_id,
-                           "channel-subscriptions"))
+        if (0 == strcmp(interaction->data->custom_id, "channel-subscriptions"))
             react_select_subscriptions_menu(cogbot, &params, interaction);
+        else if (0 == strcmp(interaction->data->custom_id, "create-channel"))
+            react_rubberduck_channel_menu(cogbot, &params, interaction);
         else if (0 == strcmp(interaction->data->custom_id, "os"))
             react_select_OS(cogbot, &params, interaction);
         break;
@@ -98,8 +97,12 @@ cogbot_get_primitives(struct discord *cogbot)
     json = discord_config_get_field(cogbot, path, 2);
     primitives.category_id = strtoull(json.start, NULL, 10);
 
-    /* cog_bot.roles.rubberduck_id */
+    /* cog_bot.roles.verified_id */
     path[1] = "roles";
+    path[2] = "verified_id";
+    json = discord_config_get_field(cogbot, path, 3);
+    primitives.roles.verified_id = strtoull(json.start, NULL, 10);
+    /* cog_bot.roles.rubberduck_id */
     path[2] = "rubberduck_id";
     json = discord_config_get_field(cogbot, path, 3);
     primitives.roles.rubberduck_id = strtoull(json.start, NULL, 10);
