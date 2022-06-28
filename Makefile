@@ -1,33 +1,30 @@
 CC ?= gcc
 
-INTERACTIONSDIR := interactions
-OBJDIR := obj
+LIBDIR           = lib
+INTERACTIONS_DIR = interactions
 
-SRC := $(INTERACTIONSDIR)/utils.c $(wildcard $(INTERACTIONSDIR)/**/*.c)
-OBJS := $(SRC:$(INTERACTIONSDIR)/%.c=$(OBJDIR)/%.o)
+MAIN = main
 
-MAIN := main
+CFLAGS  = -pthread -Wall -Wextra -O0 -g -I$(INTERACTIONS_DIR)
+LDFLAGS = -L$(LIBDIR)
+LDLIBS  = -ldiscord -lcurl
 
-CFLAGS := -pthread -Wall -Wextra -O0 -g -I$(INTERACTIONSDIR)
-LDFLAGS := -ldiscord -lcurl
-
-$(OBJDIR)/%.o: $(INTERACTIONSDIR)/%.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+ARLIB = $(LIBDIR)/libcogmaster.a
 
 all: $(MAIN)
 
-$(MAIN): $(MAIN).c $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(MAIN): $(ARLIB)
 
-$(OBJS): | $(OBJDIR)
-
-$(OBJDIR):
-	mkdir -p $(dir $(OBJS))
+$(ARLIB):
+	@ $(MAKE) -C $(INTERACTIONS_DIR)
 
 echo:
-	@ echo SRC: $(SRC)
-	@ echo OBJS: $(OBJS)
+	@ echo -e 'CC: $(CC)\n'
+	@ echo -e 'CFLAGS: $(CFLAGS)\n'
+	@ echo -e 'MAIN: $(MAIN)\n'
 
 clean:
-	rm -rf $(MAIN)
-	rm -rf $(OBJDIR)
+	@ rm -f $(MAIN)
+	@ $(MAKE) -C $(INTERACTIONS_DIR) clean
+
+.PHONY: echo clean

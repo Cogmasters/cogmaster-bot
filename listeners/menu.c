@@ -5,6 +5,7 @@
 
 #include <concord/discord.h>
 #include <concord/cog-utils.h>
+#include <concord/log.h>
 
 struct discord_guild *
 get_guild(struct discord *cogbot)
