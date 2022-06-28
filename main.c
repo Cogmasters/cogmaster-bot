@@ -43,10 +43,6 @@ on_interaction_create(struct discord *cogbot,
                     react_rubberduck_channel_configure(
                         cogbot, &params, interaction,
                         interaction->data->options->array[i].options);
-                else if (0 == strcmp(cmd, "create"))
-                    react_rubberduck_channel_create(
-                        cogbot, &params, interaction,
-                        interaction->data->options->array[i].options);
                 else if (0 == strcmp(cmd, "delete"))
                     react_rubberduck_channel_delete(
                         cogbot, &params, interaction,
