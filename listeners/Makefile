@@ -1,18 +1,18 @@
 CC ?= gcc
-SRC := cmd.c menu.c
-SETTERS := $(SRC:%.c=%)
 
-CFLAGS := -Wall -Wextra -O0 -g -pthread
-LDFLAGS := -ldiscord -lcurl
+EXES = cmd menu
 
-%: %.c
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+CFLAGS  = -pthread -Wall -Wextra -O0 -g
+LDLIBS  = -ldiscord -lcurl
 
-all: $(SETTERS)
+all: $(EXES)
 
 echo:
-	@ echo SRC: $(SRC)
-	@ echo SETTERS: $(SETTERS)
+	@ echo -e 'CC: $(CC)\n'
+	@ echo -e 'CFLAGS: $(CFLAGS)\n'
+	@ echo -e 'EXES: $(EXES)\n'
 
 clean:
-	rm $(SETTERS)
+	@ rm -f $(EXES)
+
+.PHONY: echo clean
